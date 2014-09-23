@@ -1,0 +1,6 @@
+README for addr2entrance
+=================================
+
+Simple tool to move addr:* to a selected (entrance) node. Select building and press 'e'. Select your addr-tags and press OK.
+
+author: Harald Hartmann, osm@haraldhartmann.de

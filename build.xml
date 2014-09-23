@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="addr2entrace" default="dist" basedir=".">
+    <!-- enter the SVN commit message -->
+    <property name="commit.message" value="Initial version."/>
+    <!-- enter the *lowest* JOSM version this plugin is currently compatible with -->
+    <property name="plugin.main.version" value="7480"/>
+    <!-- Configure these properties (replace "..." accordingly).
+         See http://josm.openstreetmap.de/wiki/DevelopersGuide/DevelopingPlugins
+    -->
+    <property name="plugin.author" value="Harald Hartmann"/>
+    <property name="plugin.class" value="org.openstreetmap.josm.plugins.addr2entrance.Addr2EntrancePlugin"/>
+    <property name="plugin.description" value="Tool to move addr:* from building to entrance node."/>
+    <property name="plugin.icon" value="images/addr2entrance.png"/>
+    <property name="plugin.link" value="http://josm.openstreetmap.de/wiki/Help/Plugin/addr2entrance"/>
+
+    <!-- ** include targets that all plugins have in common ** -->
+    <import file="../build-common.xml"/>
+</project>
