@@ -18,5 +18,10 @@ Oliver Raupach and his HouseNumberTaggingTool - blueprint for this tool.
 - The tool only offers entrance values mentioned in [entrance proposal](https://wiki.openstreetmap.org/wiki/Proposed_features/entrance)
 - The tool identify an already set [building=entrance](https://wiki.openstreetmap.org/wiki/Tag:building%3Dentrance) and offer to remove it
 
+## Planned
+- if no addr:* in building, suggest from nearby dataset, analog to HouseNumberTaggingTool
+- add wheelchair tagging
+- add access tagging
+
 ## Author
 Harald Hartmann <osm@haraldhartmann.de>, [OSM-Profile](https://wiki.openstreetmap.org/wiki/User:Haribo)

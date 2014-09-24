@@ -60,7 +60,7 @@ public class TagDialog extends ExtendedDialog {
 	public static final String TAG_ENTRANCE = "entrance";
 	public static final String TAG_BUILDING = "building";
 
-	private static final String REMOVE_BUILDING_ENTRANCE = tr("Node already tagged as building=entrance, remove this?");
+	private static final String REMOVE_BUILDING_ENTRANCE = tr("Node already tagged as building=entrance, remove it?");
 
 	public static final String[] entranceStrings = { "yes", "main", "service",
 			"exit", "emergency" };
