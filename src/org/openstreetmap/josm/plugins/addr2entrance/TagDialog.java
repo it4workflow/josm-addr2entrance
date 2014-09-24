@@ -3,20 +3,30 @@ package org.openstreetmap.josm.plugins.addr2entrance;
 import static org.openstreetmap.josm.tools.I18n.tr;
 import static org.openstreetmap.josm.tools.I18n.trn;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
@@ -99,8 +109,12 @@ public class TagDialog extends ExtendedDialog {
 
 	private JPanel createContentPanel() {
 
-		JPanel editPanel = new JPanel(new GridBagLayout());
+		JPanel editPanel = new JPanel(new BorderLayout());
 		GridBagConstraints c = new GridBagConstraints();
+
+		JPanel entrancePanel = new JPanel(new GridBagLayout());
+		entrancePanel.setBorder(BorderFactory
+				.createTitledBorder(tr("Entrance")));
 
 		entranceEnabled = new JCheckBox(TAG_ENTRANCE);
 		entranceEnabled.setFocusable(false);
@@ -110,8 +124,8 @@ public class TagDialog extends ExtendedDialog {
 		c.gridx = 0;
 		c.gridy = 0;
 		c.weightx = 0;
-		c.gridwidth = 3;
-		editPanel.add(entranceEnabled, c);
+		c.gridwidth = 1;
+		entrancePanel.add(entranceEnabled, c);
 
 		entrance = new JComboBox<String>(entranceStrings);
 		if (selection.hasKey(TAG_ENTRANCE)) {
@@ -119,11 +133,60 @@ public class TagDialog extends ExtendedDialog {
 			entrance.setSelectedItem(selection.get(TAG_ENTRANCE));
 		}
 		entrance.setMaximumRowCount(20);
-		c.gridx = 3;
+		c.gridx = 1;
 		c.gridy = 0;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(entrance, c);
+		entrancePanel.add(entrance, c);
+
+		// remove building=entrance
+		buildingEntranceEnabled = new JCheckBox(REMOVE_BUILDING_ENTRANCE);
+		buildingEntranceEnabled.setEnabled(hasBuildingEntranceTag());
+		buildingEntranceEnabled.setFocusable(false);
+		buildingEntranceEnabled.setSelected(hasBuildingEntranceTag());
+		buildingEntranceEnabled.setToolTipText(REMOVE_BUILDING_ENTRANCE);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.weightx = 0;
+		c.gridwidth = 2;
+		entrancePanel.add(buildingEntranceEnabled, c);
+
+		class OpenUrlAction implements ActionListener {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (Desktop.isDesktopSupported()) {
+					try {
+						Desktop.getDesktop()
+								.browse(new URI(
+										"https://wiki.openstreetmap.org/wiki/Key:entrance"));
+					} catch (IOException ex) { /* TODO: error handling */
+					} catch (URISyntaxException e1) {
+						// TODO: error handling */
+					}
+				}
+			}
+		}
+
+		JButton button = new JButton();
+		button.setText("<HTML><U>Wiki for entrance</U></HTML>");
+		button.setHorizontalAlignment(SwingConstants.LEFT);
+		button.setBorderPainted(false);
+		button.setOpaque(false);
+		button.setToolTipText(tr("Goto wiki"));
+		button.setBackground(Color.WHITE);
+		button.addActionListener(new OpenUrlAction());
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 2;
+		c.weightx = 0;
+		c.gridwidth = 2;
+		entrancePanel.add(button, c);
+
+		editPanel.add(entrancePanel, BorderLayout.NORTH);
+
+		JPanel addrPanel = new JPanel(new GridBagLayout());
+		addrPanel.setBorder(BorderFactory.createTitledBorder(tr("Address")));
 
 		// country
 		countryEnabled = new JCheckBox(TAG_ADDR_COUNTRY);
@@ -136,7 +199,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 1;
 		c.weightx = 0;
 		c.gridwidth = 3;
-		editPanel.add(countryEnabled, c);
+		addrPanel.add(countryEnabled, c);
 
 		country = new JTextField();
 		country.setPreferredSize(new Dimension(200, 24));
@@ -147,7 +210,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 1;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(country, c);
+		addrPanel.add(country, c);
 
 		// state
 		stateEnabled = new JCheckBox(TAG_ADDR_STATE);
@@ -160,7 +223,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 2;
 		c.weightx = 0;
 		c.gridwidth = 3;
-		editPanel.add(stateEnabled, c);
+		addrPanel.add(stateEnabled, c);
 
 		state = new JTextField();
 		state.setPreferredSize(new Dimension(200, 24));
@@ -171,7 +234,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 2;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(state, c);
+		addrPanel.add(state, c);
 
 		// city
 		cityEnabled = new JCheckBox(TAG_ADDR_CITY);
@@ -183,7 +246,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 3;
 		c.weightx = 0;
 		c.gridwidth = 3;
-		editPanel.add(cityEnabled, c);
+		addrPanel.add(cityEnabled, c);
 
 		city = new JTextField();
 		city.setPreferredSize(new Dimension(200, 24));
@@ -194,7 +257,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 3;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(city, c);
+		addrPanel.add(city, c);
 
 		// postcode
 		postcodeEnabled = new JCheckBox(TAG_ADDR_POSTCODE);
@@ -206,7 +269,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 4;
 		c.weightx = 0;
 		c.gridwidth = 3;
-		editPanel.add(postcodeEnabled, c);
+		addrPanel.add(postcodeEnabled, c);
 
 		postcode = new JTextField();
 		postcode.setPreferredSize(new Dimension(200, 24));
@@ -217,7 +280,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 4;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(postcode, c);
+		addrPanel.add(postcode, c);
 
 		// street
 		streetEnabled = new JCheckBox(TAG_ADDR_STREET);
@@ -229,7 +292,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 5;
 		c.weightx = 0;
 		c.gridwidth = 1;
-		editPanel.add(streetEnabled, c);
+		addrPanel.add(streetEnabled, c);
 
 		street = new JTextField();
 		street.setPreferredSize(new Dimension(200, 24));
@@ -239,7 +302,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 5;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(street, c);
+		addrPanel.add(street, c);
 
 		// place
 		placeEnabled = new JCheckBox(TAG_ADDR_PLACE);
@@ -251,7 +314,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 6;
 		c.weightx = 0;
 		c.gridwidth = 1;
-		editPanel.add(placeEnabled, c);
+		addrPanel.add(placeEnabled, c);
 
 		place = new JTextField();
 		place.setPreferredSize(new Dimension(200, 24));
@@ -261,7 +324,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 6;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(place, c);
+		addrPanel.add(place, c);
 
 		// housenumber
 		housenumberEnabled = new JCheckBox(TAG_ADDR_HOUSENUMBER);
@@ -273,7 +336,7 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 7;
 		c.weightx = 0;
 		c.gridwidth = 3;
-		editPanel.add(housenumberEnabled, c);
+		addrPanel.add(housenumberEnabled, c);
 
 		housenumber = new JTextField();
 		housenumber.setPreferredSize(new Dimension(200, 24));
@@ -283,21 +346,8 @@ public class TagDialog extends ExtendedDialog {
 		c.gridy = 7;
 		c.weightx = 1;
 		c.gridwidth = 1;
-		editPanel.add(housenumber, c);
-
-		// remove building=entrance
-		buildingEntranceEnabled = new JCheckBox(REMOVE_BUILDING_ENTRANCE);
-		buildingEntranceEnabled.setEnabled(hasBuildingEntranceTag());
-		buildingEntranceEnabled.setFocusable(false);
-		buildingEntranceEnabled.setSelected(hasBuildingEntranceTag());
-		buildingEntranceEnabled.setToolTipText(REMOVE_BUILDING_ENTRANCE);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 8;
-		c.weightx = 0;
-		c.gridwidth = 4;
-		editPanel.add(buildingEntranceEnabled, c);
-
+		addrPanel.add(housenumber, c);
+		editPanel.add(addrPanel, BorderLayout.CENTER);
 		return editPanel;
 	}
 

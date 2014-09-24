@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project name="addr2entrace" default="dist" basedir=".">
-    <!-- enter the SVN commit message -->
-    <property name="commit.message" value="Initial version."/>
     <!-- enter the *lowest* JOSM version this plugin is currently compatible with -->
     <property name="plugin.main.version" value="7480"/>
     <!-- Configure these properties (replace "..." accordingly).
