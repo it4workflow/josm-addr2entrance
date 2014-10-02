@@ -1,437 +1,491 @@
 package org.openstreetmap.josm.plugins.addr2entrance;
 
-import static org.openstreetmap.josm.tools.I18n.tr;
-import static org.openstreetmap.josm.tools.I18n.trn;
-
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
-import javax.swing.Icon;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
 
 import org.openstreetmap.josm.Main;
 import org.openstreetmap.josm.command.ChangePropertyCommand;
-import org.openstreetmap.josm.command.Command;
-import org.openstreetmap.josm.command.SequenceCommand;
-import org.openstreetmap.josm.data.osm.OsmPrimitive;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
 import org.openstreetmap.josm.gui.ExtendedDialog;
-import org.openstreetmap.josm.gui.tagging.ac.AutoCompletingComboBox;
-import org.openstreetmap.josm.gui.tagging.ac.AutoCompletionListItem;
-import org.openstreetmap.josm.gui.tagging.ac.AutoCompletionManager;
+import org.openstreetmap.josm.gui.tagging.TaggingPreset;
+import org.openstreetmap.josm.gui.tagging.TaggingPresets;
+import org.openstreetmap.josm.tools.I18n;
+import org.openstreetmap.josm.tools.ImageProvider;
 
 /**
  * @author Harald Hartmann
  */
 public class TagDialog extends ExtendedDialog {
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = -4813073152394319113L;
 
-	private static final String APPLY_CHANGES = tr("Apply Changes");
+	private static final String REMOVE_BUILDING_ENTRANCE = I18n
+			.tr("Node already tagged as building=entrance, remove it?");
 
-	public static final String TAG_ADDR_COUNTRY = "addr:country";
-	public static final String TAG_ADDR_STATE = "addr:state";
-	public static final String TAG_ADDR_CITY = "addr:city";
-	public static final String TAG_ADDR_POSTCODE = "addr:postcode";
-	public static final String TAG_ADDR_HOUSENUMBER = "addr:housenumber";
-	public static final String TAG_ADDR_STREET = "addr:street";
-	public static final String TAG_ADDR_PLACE = "addr:place";
-	public static final String TAG_ENTRANCE = "entrance";
-	public static final String TAG_BUILDING = "building";
+	public static final String KEY_BUILDING = "building";
+	public static final String KEY_ENTRANCE = "entrance";
+	public static final String KEY_NAME = "name";
+	public static final String KEY_REF = "ref";
+	public static final String KEY_WHEELCHAIR = "wheelcair";
 
-	private static final String REMOVE_BUILDING_ENTRANCE = tr("Node already tagged as building=entrance, remove it?");
-
-	public static final String[] entranceStrings = { "yes", "main", "service",
-			"exit", "emergency" };
-
-	static private final Logger logger = Logger.getLogger(TagDialog.class
+	private static final Logger LOGGER = Logger.getLogger(TagDialog.class
 			.getName());
 
-	private OsmPrimitive selection;
-	private OsmPrimitive referrer = null;
+	private Node selection;
+	private Way referrer;
+	private Collection<Node> nodes;
+	private TaggingPreset tpAddresses;
+	private TaggingPreset tpEntrance;
 
-	private JTextField country;
-	private JTextField state;
-	private JTextField city;
-	private JTextField postcode;
-	private JTextField street;
-	private JTextField place;
-	private JTextField housenumber;
-	private JComboBox<String> entrance;
-	private JCheckBox countryEnabled;
-	private JCheckBox stateEnabled;
-	private JCheckBox cityEnabled;
-	private JCheckBox postcodeEnabled;
-	private JCheckBox streetEnabled;
-	private JCheckBox placeEnabled;
-	private JCheckBox housenumberEnabled;
-	private JCheckBox entranceEnabled;
 	private JCheckBox buildingEntranceEnabled;
+	private JRadioButton preferBuildingRadio;
+	private JRadioButton preferEntranceRadio;
 
-	public TagDialog(OsmPrimitive p_selection, OsmPrimitive p_referrer) {
-		super(Main.parent, tr("Move addr:* to entrance node"), new String[] {
-				tr("OK"), tr("Cancel") }, true);
+	public static void main(String[] args) {
 
-		this.selection = p_selection;
-		this.referrer = p_referrer;
+		Main.initApplicationPreferences();
+		Main.pref.enableSaveOnPut(false);
+		I18n.init();
+		// initialize the plaform hook, and
+		Main.determinePlatformHook();
+		// call the really early hook before we anything else
+		Main.platform.preStartupHook();
+		Main.pref.init(false);
+		I18n.set(Main.pref.get("language", "de"));
+		Collection<Node> nodes = new ArrayList<Node>(1);
+		nodes.add(new Node());
+		TagDialog dialog = new TagDialog(new Node(), new Way(), nodes);
+		dialog.showDialog();
 
-		JPanel editPanel = createContentPanel();
-		setContent(editPanel);
+	}
+
+	public TagDialog(Node p_selection, Way p_referrer, Collection<Node> p_nodes) {
+
+		super(Main.parent, I18n.tr("Move addr:* to entrance node"),
+				new String[] { I18n.tr("OK"), I18n.tr("Cancel") }, true);
+
+		selection = p_selection;
+		referrer = p_referrer;
+		nodes = p_nodes;
+
+		for (TaggingPreset preset : TaggingPresets.getTaggingPresets()) {
+
+			if ("Man Made/Man Made/Entrance".equals(preset.getRawName())) {
+				tpEntrance = preset;
+			}
+
+			if ("Annotation/Addresses".equals(preset.getRawName())) {
+				tpAddresses = preset;
+			}
+		}
+
+		// Collection<OsmPrimitive> osmPrimitives = new ArrayList<OsmPrimitive>(
+		// Arrays.asList(selection));
+		// tpEntrance.showDialog(osmPrimitives, false);
+		tpEntrance.actionPerformed(null);
+
+		JPanel contentPanel = createContentPanel();
+		setContent(contentPanel);
 		setButtonIcons(new String[] { "ok.png", "cancel.png" });
 		setDefaultButton(1);
 		setupDialog();
 		getRootPane().setDefaultButton(defaultButton);
-
-		// middle of the screen
 		setLocationRelativeTo(null);
 	}
 
-	private JPanel createContentPanel() {
-
-		JPanel editPanel = new JPanel(new BorderLayout());
-		GridBagConstraints c = new GridBagConstraints();
-
-		JPanel entrancePanel = new JPanel(new GridBagLayout());
-		entrancePanel.setBorder(BorderFactory
-				.createTitledBorder(tr("Entrance")));
-
-		entranceEnabled = new JCheckBox(TAG_ENTRANCE);
-		entranceEnabled.setFocusable(false);
-		entranceEnabled.setSelected(true);
-		entranceEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 0;
-		c.gridwidth = 1;
-		entrancePanel.add(entranceEnabled, c);
-
-		entrance = new JComboBox<String>(entranceStrings);
-		if (selection.hasKey(TAG_ENTRANCE)) {
-			entrance.setEditable(true);
-			entrance.setSelectedItem(selection.get(TAG_ENTRANCE));
-		}
-		entrance.setMaximumRowCount(20);
-		c.gridx = 1;
-		c.gridy = 0;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		entrancePanel.add(entrance, c);
-
-		// remove building=entrance
-		buildingEntranceEnabled = new JCheckBox(REMOVE_BUILDING_ENTRANCE);
-		buildingEntranceEnabled.setEnabled(hasBuildingEntranceTag());
-		buildingEntranceEnabled.setFocusable(false);
-		buildingEntranceEnabled.setSelected(hasBuildingEntranceTag());
-		buildingEntranceEnabled.setToolTipText(REMOVE_BUILDING_ENTRANCE);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 1;
-		c.weightx = 0;
-		c.gridwidth = 2;
-		entrancePanel.add(buildingEntranceEnabled, c);
-
-		class OpenUrlAction implements ActionListener {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (Desktop.isDesktopSupported()) {
-					try {
-						Desktop.getDesktop()
-								.browse(new URI(
-										"https://wiki.openstreetmap.org/wiki/Key:entrance"));
-					} catch (IOException ex) { /* TODO: error handling */
-					} catch (URISyntaxException e1) {
-						// TODO: error handling */
-					}
-				}
-			}
-		}
-
-		JButton button = new JButton();
-		button.setText("<HTML><U>Wiki for entrance</U></HTML>");
-		button.setHorizontalAlignment(SwingConstants.LEFT);
-		button.setBorderPainted(false);
-		button.setOpaque(false);
-		button.setToolTipText(tr("Goto wiki"));
-		button.setBackground(Color.WHITE);
-		button.addActionListener(new OpenUrlAction());
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.gridwidth = 2;
-		entrancePanel.add(button, c);
-
-		editPanel.add(entrancePanel, BorderLayout.NORTH);
-
-		JPanel addrPanel = new JPanel(new GridBagLayout());
-		addrPanel.setBorder(BorderFactory.createTitledBorder(tr("Address")));
-
-		// country
-		countryEnabled = new JCheckBox(TAG_ADDR_COUNTRY);
-		countryEnabled.setFocusable(false);
-		countryEnabled.setSelected(referrer.hasKey(TAG_ADDR_COUNTRY));
-		countryEnabled.setToolTipText(APPLY_CHANGES);
-		c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 1;
-		c.weightx = 0;
-		c.gridwidth = 3;
-		addrPanel.add(countryEnabled, c);
-
-		country = new JTextField();
-		country.setPreferredSize(new Dimension(200, 24));
-		country.setEditable(true);
-		country.setText(getAddr(TAG_ADDR_COUNTRY));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 1;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(country, c);
-
-		// state
-		stateEnabled = new JCheckBox(TAG_ADDR_STATE);
-		stateEnabled.setFocusable(false);
-		stateEnabled.setSelected(referrer.hasKey(TAG_ADDR_STATE));
-		stateEnabled.setToolTipText(APPLY_CHANGES);
-		c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 2;
-		c.weightx = 0;
-		c.gridwidth = 3;
-		addrPanel.add(stateEnabled, c);
-
-		state = new JTextField();
-		state.setPreferredSize(new Dimension(200, 24));
-		state.setEditable(true);
-		state.setText(getAddr(TAG_ADDR_STATE));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 2;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(state, c);
-
-		// city
-		cityEnabled = new JCheckBox(TAG_ADDR_CITY);
-		cityEnabled.setFocusable(false);
-		cityEnabled.setSelected(referrer.hasKey(TAG_ADDR_CITY));
-		cityEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 3;
-		c.weightx = 0;
-		c.gridwidth = 3;
-		addrPanel.add(cityEnabled, c);
-
-		city = new JTextField();
-		city.setPreferredSize(new Dimension(200, 24));
-		city.setEditable(true);
-		city.setText(getAddr(TAG_ADDR_CITY));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 3;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(city, c);
-
-		// postcode
-		postcodeEnabled = new JCheckBox(TAG_ADDR_POSTCODE);
-		postcodeEnabled.setFocusable(false);
-		postcodeEnabled.setSelected(referrer.hasKey(TAG_ADDR_POSTCODE));
-		postcodeEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 4;
-		c.weightx = 0;
-		c.gridwidth = 3;
-		addrPanel.add(postcodeEnabled, c);
-
-		postcode = new JTextField();
-		postcode.setPreferredSize(new Dimension(200, 24));
-		postcode.setEditable(true);
-		postcode.setText(getAddr(TAG_ADDR_POSTCODE));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 4;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(postcode, c);
-
-		// street
-		streetEnabled = new JCheckBox(TAG_ADDR_STREET);
-		streetEnabled.setFocusable(false);
-		streetEnabled.setSelected(referrer.hasKey(TAG_ADDR_STREET));
-		streetEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 5;
-		c.weightx = 0;
-		c.gridwidth = 1;
-		addrPanel.add(streetEnabled, c);
-
-		street = new JTextField();
-		street.setPreferredSize(new Dimension(200, 24));
-		street.setText(getAddr(TAG_ADDR_STREET));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 5;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(street, c);
-
-		// place
-		placeEnabled = new JCheckBox(TAG_ADDR_PLACE);
-		placeEnabled.setFocusable(false);
-		placeEnabled.setSelected(referrer.hasKey(TAG_ADDR_PLACE));
-		placeEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 6;
-		c.weightx = 0;
-		c.gridwidth = 1;
-		addrPanel.add(placeEnabled, c);
-
-		place = new JTextField();
-		place.setPreferredSize(new Dimension(200, 24));
-		place.setText(getAddr(TAG_ADDR_PLACE));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 6;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(place, c);
-
-		// housenumber
-		housenumberEnabled = new JCheckBox(TAG_ADDR_HOUSENUMBER);
-		housenumberEnabled.setFocusable(false);
-		housenumberEnabled.setSelected(referrer.hasKey(TAG_ADDR_HOUSENUMBER));
-		housenumberEnabled.setToolTipText(APPLY_CHANGES);
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 0;
-		c.gridy = 7;
-		c.weightx = 0;
-		c.gridwidth = 3;
-		addrPanel.add(housenumberEnabled, c);
-
-		housenumber = new JTextField();
-		housenumber.setPreferredSize(new Dimension(200, 24));
-		housenumber.setText(getAddr(TAG_ADDR_HOUSENUMBER));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.gridx = 3;
-		c.gridy = 7;
-		c.weightx = 1;
-		c.gridwidth = 1;
-		addrPanel.add(housenumber, c);
-		editPanel.add(addrPanel, BorderLayout.CENTER);
-		return editPanel;
-	}
+	// ######################################################################
 
 	@Override
 	protected void buttonAction(int buttonIndex, ActionEvent evt) {
+
 		if (buttonIndex == 0) {
-			updateJOSMSelection();
+			if ((buildingEntranceEnabled != null)
+					&& buildingEntranceEnabled.isSelected()) {
+				Main.main.undoRedo.add(new ChangePropertyCommand(selection,
+						KEY_BUILDING, null));
+			}
 		}
+
 		setVisible(false);
 	}
 
-	protected void updateJOSMSelection() {
-		ArrayList<Command> commands = new ArrayList<Command>();
+	// ######################################################################
 
-		if (this.entranceEnabled.isSelected()) {
-			commands.add(new ChangePropertyCommand(selection, TAG_ENTRANCE,
-					this.entrance.getSelectedItem().toString()));
+	private JPanel createContentPanel() {
+
+		JPanel contentPanel = new JPanel(new BorderLayout());
+
+		// Entrance-Panel
+		Box entrancePanel = new Box(BoxLayout.Y_AXIS);
+		entrancePanel.setBorder(BorderFactory.createTitledBorder(I18n
+				.tr("Entrance")));
+
+		if (existsBuildingEntranceTag()) {
+			entrancePanel.add(getBuildingEntranceWarningPanel());
+			entrancePanel.add(getBuildingEntranceWarningPanelOld());
 		}
 
-		if (this.cityEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_CITY, city.getText());
+		if (existsAnotherMainEntrance()) {
+			entrancePanel.add(getMainEntranceWarningPanel());
 		}
 
-		if (this.countryEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_COUNTRY, country.getText());
+		if (entrancePanel.getComponents().length > 0) {
+			contentPanel.add(entrancePanel, BorderLayout.CENTER);
 		}
 
-		if (this.housenumberEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_HOUSENUMBER, housenumber.getText());
+		// Address-Panel
+		Box addressPanel = new Box(BoxLayout.Y_AXIS);
+		addressPanel.setBorder(BorderFactory.createTitledBorder(I18n
+				.tr("Address")));
+
+		if (!existsAnyAddress()) {
+			addressPanel.add(getNeitherEntranceNorBuildingHasAddress());
+		}
+		if (existsSelectionAddress()) {
+			addressPanel.add(getEntranceHasAddress());
+		}
+		if (existsReferrerAddress()) {
+			addressPanel.add(getBuildingHasAddress());
+		}
+		if (existsOneAnotherEntranceWithAddress()) {
+			addressPanel.add(getOneAnotherEntranceAddress());
+		}
+		if (existsSomeEntrancesWithAddressSomeWithout()) {
+			addressPanel.add(getSomeEntrancesWithAddressSomeWithout());
+		} else if (existsMoreEntrancesWithAddress()) {
+			addressPanel.add(getMoreEntrancesAddress());
 		}
 
-		if (this.postcodeEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_POSTCODE, postcode.getText());
+		if (addressPanel.getComponents().length > 0) {
+			contentPanel.add(addressPanel, BorderLayout.SOUTH);
 		}
 
-		if (this.streetEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_STREET, street.getText());
+		if ((addressPanel.getComponents().length == 0)
+				&& (entrancePanel.getComponents().length == 0)) {
+			contentPanel.add(new JLabel(I18n.tr("Everything seems fine."),
+					ImageProvider.get("misc/green_check.png"),
+					SwingConstants.LEADING));
 		}
 
-		if (this.stateEnabled.isSelected()) {
-			addCommand(commands, TAG_ADDR_STATE, state.getText());
-		}
-
-		if (this.buildingEntranceEnabled.isSelected()
-				&& hasBuildingEntranceTag()) {
-			commands.add(new ChangePropertyCommand(selection, TAG_BUILDING,
-					null));
-		}
-
-		if (commands.size() > 0) {
-			SequenceCommand sequenceCommand = new SequenceCommand(trn(
-					"Updating properties of up to {0} object",
-					"Updating properties of up to {0} objects",
-					commands.size(), commands.size()), commands);
-
-			// executes the commands and adds them to the undo/redo chains
-			Main.main.undoRedo.add(sequenceCommand);
-		}
+		return contentPanel;
 	}
 
-	private boolean hasBuildingEntranceTag() {
-		return selection.hasKey(TAG_BUILDING)
-				&& selection.get(TAG_BUILDING).equalsIgnoreCase(TAG_ENTRANCE);
+	private Component getMainEntranceWarningPanel() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		panel.add(new JLabel(ImageProvider.get("data/warning.png")));
+		panel.add(new JLabel(
+				I18n.tr("There is already another main entrance, please doublecheck")));
+		return panel;
 	}
 
-	private void addCommand(ArrayList<Command> commands, String key,
-			String value) {
-		// add key and value to selected node
-		ChangePropertyCommand command = new ChangePropertyCommand(selection,
-				key, value);
-		commands.add(command);
-		// remove key and value from referrer
-		command = new ChangePropertyCommand(referrer, key, null);
-		commands.add(command);
+	private Component getBuildingEntranceWarningPanel() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		panel.add(new JLabel(ImageProvider.get("data/warning.png")));
+		panel.add(new JLabel(I18n
+				.tr("Node is already tagged with building=entrance, ")));
+		JButton button = new JButton(I18n.tr("remove it?"));
+		button.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				JButton button = (JButton) e.getSource();
+				button.setEnabled(false);
+				Main.main.undoRedo.add(new ChangePropertyCommand(selection,
+						KEY_BUILDING, null));
+			}
+		});
+		panel.add(button);
+
+		return panel;
 	}
 
-	private String getAddr(String key) {
-		String value = null;
+	private Component getBuildingEntranceWarningPanelOld() {
 
-		if (referrer.hasKey(key)) {
-			value = referrer.get(key);
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		panel.add(new JLabel(ImageProvider.get("data/warning.png")));
+
+		buildingEntranceEnabled = new JCheckBox(REMOVE_BUILDING_ENTRANCE);
+		buildingEntranceEnabled.setEnabled(existsBuildingEntranceTag());
+		buildingEntranceEnabled.setFocusable(false);
+		buildingEntranceEnabled.setSelected(existsBuildingEntranceTag());
+		buildingEntranceEnabled.setToolTipText(REMOVE_BUILDING_ENTRANCE);
+		panel.add(buildingEntranceEnabled);
+
+		return panel;
+	}
+
+	private Component getNeitherEntranceNorBuildingHasAddress() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		panel.add(new JLabel(ImageProvider.get("data/warning.png")));
+
+		panel.add(new JLabel(I18n.tr("Neither")));
+
+		JButton button = new JButton(I18n.tr("Entrance"));
+		button.addActionListener(new CreateEntranceAddressAction(tpAddresses,
+				selection));
+		panel.add(button);
+
+		panel.add(new JLabel(I18n.tr("nor")));
+
+		button = new JButton(I18n.tr("Building"));
+		button.addActionListener(new CreateBuildingAddressAction(tpAddresses,
+				referrer));
+		panel.add(button);
+
+		panel.add(new JLabel(
+				I18n.tr("has an address yet, click the button you prefer to tag it.")));
+
+		return panel;
+	}
+
+	private Component getEntranceHasAddress() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		// panel.add(new JLabel(ImageProvider.get("dialogs/valid.png")));
+		panel.add(new JLabel(ImageProvider.get("misc/green_check.png")));
+
+		panel.add(new JLabel(I18n
+				.tr("The entrance is already tagged with an address,")));
+
+		JButton button = new JButton(I18n.tr("move"));
+		button.addActionListener(new MoveOrCopyAddressAction(selection,
+				referrer, false));
+		panel.add(button);
+
+		panel.add(new JLabel(I18n.tr("or")));
+
+		button = new JButton(I18n.tr("copy"));
+		button.addActionListener(new MoveOrCopyAddressAction(selection,
+				referrer, true));
+		panel.add(button);
+
+		panel.add(new JLabel(I18n.tr("it to building.")));
+
+		return panel;
+	}
+
+	private Component getBuildingHasAddress() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		// panel.add(new JLabel(ImageProvider.get("dialogs/valid.png")));
+		panel.add(new JLabel(ImageProvider.get("misc/green_check.png")));
+
+		panel.add(new JLabel(I18n
+				.tr("The building is already tagged with an address,")));
+
+		JButton button = new JButton(I18n.tr("move"));
+		button.addActionListener(new MoveOrCopyAddressAction(referrer,
+				selection, false));
+		panel.add(button);
+
+		panel.add(new JLabel(I18n.tr("or")));
+
+		button = new JButton(I18n.tr("copy"));
+		button.addActionListener(new MoveOrCopyAddressAction(referrer,
+				selection, true));
+		panel.add(button);
+
+		panel.add(new JLabel(I18n.tr("it to entrance.")));
+
+		return panel;
+	}
+
+	private Component getOneAnotherEntranceAddress() {
+
+		JPanel firstLine = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		firstLine.add(new JLabel(ImageProvider.get("data/warning.png")));
+		firstLine.add(new JLabel(I18n
+				.tr("There is another entrance tagged with address,")));
+
+		JPanel secondLine = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		Address address = getAllAddresses(true).iterator().next();
+		secondLine.add(new JLabel(address.toString()));
+
+		JPanel thirdLine = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		thirdLine.add(new JLabel(I18n.tr("Same address?")));
+
+		JButton button = new JButton(I18n.tr("Move"));
+		button.addActionListener(new MoveOrCopyAddressAction(address
+				.getPrimitive(), referrer, false));
+		thirdLine.add(button);
+
+		thirdLine.add(new JLabel(I18n.tr("it to building, or")));
+
+		button = new JButton(I18n.tr("create"));
+		button.addActionListener(new CreateEntranceAddressAction(tpAddresses,
+				selection));
+		thirdLine.add(button);
+
+		thirdLine.add(new JLabel(I18n.tr("an address for this entrance.")));
+
+		Box box = new Box(BoxLayout.Y_AXIS);
+		box.add(firstLine);
+		box.add(secondLine);
+		box.add(thirdLine);
+
+		return box;
+	}
+
+	private Component getSomeEntrancesWithAddressSomeWithout() {
+
+		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		panel.add(new JLabel(ImageProvider.get("data/warning.png")));
+		panel.add(new JLabel(
+				I18n.tr("There are some entrances with an address, some without one. Please check!")));
+
+		return panel;
+	}
+
+	private Component getMoreEntrancesAddress() {
+
+		JPanel firstLine = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
+		firstLine.add(new JLabel(ImageProvider.get("data/warning.png")));
+		firstLine.add(new JLabel(I18n
+				.tr("There are several other entrances tagged with address,")));
+
+		JPanel secondLine = new JPanel(new FlowLayout(FlowLayout.LEADING));
+		JButton button = new JButton(I18n.tr("create"));
+		button.addActionListener(new CreateEntranceAddressAction(tpAddresses,
+				selection));
+		secondLine.add(button);
+		secondLine.add(new JLabel(I18n.tr("an address for this entrance.")));
+
+		Box box = new Box(BoxLayout.Y_AXIS);
+		box.add(firstLine);
+		box.add(secondLine);
+
+		return box;
+	}
+
+	// ######################################################################
+
+	private boolean existsBuildingEntranceTag() {
+
+		return selection.hasKey(KEY_BUILDING)
+				&& selection.get(KEY_BUILDING).equalsIgnoreCase(KEY_ENTRANCE);
+	}
+
+	private boolean existsAnotherMainEntrance() {
+
+		int count = 0;
+		for (int index = 0; index < referrer.getRealNodesCount(); index++) {
+			Node node = referrer.getNode(index);
+			if (node == selection) {
+				continue;
+			}
+			if (referrer.getNode(index).hasKey(KEY_ENTRANCE)
+					&& "main".equalsIgnoreCase(referrer.getNode(index).get(
+							KEY_ENTRANCE))) {
+				count++;
+			}
 		}
-
-		return value;
+		return count > 1;
 	}
 
+	private boolean existsAnyAddress() {
+
+		return getAllAddresses(false).size() > 0;
+	}
+
+	private boolean existsSelectionAddress() {
+
+		return new Address(selection).hasAddress()
+				&& (getAllAddresses(false).size() == 1);
+	}
+
+	private boolean existsReferrerAddress() {
+
+		return new Address(referrer).hasAddress()
+				&& (getAllAddresses(false).size() == 1)
+				&& (getAllOtherEntrances().size() == 0);
+	}
+
+	private boolean existsOneAnotherEntranceWithAddress() {
+
+		return (getAllAddresses(true).size() == 1)
+				&& (getAllOtherEntrances().size() == 1);
+	}
+
+	private boolean existsSomeEntrancesWithAddressSomeWithout() {
+
+		return (getAllOtherEntrances().size() > 1)
+				&& (getAllAddresses(true).size() > 0)
+				&& (getAllAddresses(true).size() != getAllOtherEntrances()
+						.size());
+	}
+
+	private boolean existsMoreEntrancesWithAddress() {
+
+		return getAllAddresses(true).size() > 1;
+	}
+
+	private Collection<Node> getAllOtherEntrances() {
+
+		Collection<Node> entrances = new ArrayList<>(referrer.getNodesCount());
+		for (int index = 0; index < referrer.getRealNodesCount(); index++) {
+			Node node = referrer.getNode(index);
+			if (node == selection) {
+				continue;
+			}
+			if (node.hasKey(KEY_ENTRANCE)) {
+				entrances.add(node);
+			}
+		}
+		return entrances;
+	}
+
+	private Collection<Address> getAllAddresses(boolean entrancesOnly) {
+
+		Collection<Address> addresses = new ArrayList<>(
+				referrer.getNodesCount() + 1);
+		Address address = null;
+
+		if (!entrancesOnly) {
+			address = new Address(referrer);
+			if (address.hasAddress()) {
+				addresses.add(address);
+			}
+		}
+		for (int index = 0; index < referrer.getRealNodesCount(); index++) {
+			Node node = referrer.getNode(index);
+			if (!node.hasKey(KEY_ENTRANCE)) {
+				continue;
+			}
+			address = new Address(node);
+			if (address.hasAddress()) {
+				addresses.add(address);
+			}
+		}
+		return addresses;
+	}
 }

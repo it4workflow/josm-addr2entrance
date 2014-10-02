@@ -2,6 +2,7 @@ package org.openstreetmap.josm.plugins.addr2entrance;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.openstreetmap.josm.actions.JosmAction;
@@ -16,8 +17,10 @@ public class LaunchAction extends JosmAction implements
 		SelectionChangedListener {
 
 	private static final long serialVersionUID = -3508864293222033185L;
-	private OsmPrimitive selection = null;
-	private OsmPrimitive referrer = null;
+
+	private Node selection = null;
+	private Way referrer = null;
+	private Collection<Node> nodes = null;
 
 	public LaunchAction(String pluginDir) {
 		super("Addr2Entrance", "addr2entrance",
@@ -38,7 +41,7 @@ public class LaunchAction extends JosmAction implements
 			return;
 		}
 
-		TagDialog dialog = new TagDialog(selection, referrer);
+		TagDialog dialog = new TagDialog(selection, referrer, nodes);
 		dialog.showDialog();
 
 	}
@@ -56,12 +59,15 @@ public class LaunchAction extends JosmAction implements
 		if ((newSelection != null && newSelection.size() == 1)
 				&& (primitive = newSelection.iterator().next()) instanceof Node) {
 
-			selection = primitive;
+			selection = (Node) primitive;
 
 			if (selection.getReferrers() != null
-					&& selection.getReferrers().size() > 0
-					&& (primitive = selection.getReferrers().iterator().next()) instanceof Way) {
-				referrer = primitive;
+					&& selection.getReferrers().size() == 1
+					&& (primitive = selection.getReferrers().iterator().next()) instanceof Way
+					&& ((Way) primitive).isClosed()) {
+
+				referrer = (Way) primitive;
+				nodes = new ArrayList<Node>(referrer.getNodes());
 				setEnabled(true);
 			} else {
 
@@ -69,7 +75,6 @@ public class LaunchAction extends JosmAction implements
 				selection = null;
 				referrer = null;
 			}
-
 		} else {
 
 			setEnabled(false);

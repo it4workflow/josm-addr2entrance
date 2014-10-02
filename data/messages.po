@@ -1,0 +1,141 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-10-02 17:10+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:41
+msgid "Node already tagged as building=entrance, remove it?"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:82
+msgid "Move addr:* to entrance node"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:83
+msgid "OK"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:83
+msgid "Cancel"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:139
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:249
+msgid "Entrance"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:157
+msgid "Address"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:183
+msgid "Everything seems fine."
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:197
+msgid "There is already another main entrance, please doublecheck"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:207
+msgid "Node is already tagged with building=entrance, "
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:208
+msgid "remove it?"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:247
+msgid "Neither"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:254
+msgid "nor"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:256
+msgid "Building"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:262
+msgid "has an address yet, click the button you prefer to tag it."
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:275
+msgid "The entrance is already tagged with an address,"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:277
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:304
+msgid "move"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:282
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:309
+msgid "or"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:284
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:311
+msgid "copy"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:289
+msgid "it to building."
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:302
+msgid "The building is already tagged with an address,"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:316
+msgid "it to entrance."
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:327
+msgid "There is another entrance tagged with address,"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:334
+msgid "Same address?"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:336
+msgid "Move"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:341
+msgid "it to building, or"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:343
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:378
+msgid "create"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:348
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:382
+msgid "an address for this entrance."
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:364
+msgid ""
+"There are some entrances with an address, some without one. Please check!"
+msgstr ""
+
+#: ../src/org/openstreetmap/josm/plugins/addr2entrance/TagDialog.java:375
+msgid "There are several other entrances tagged with address,"
+msgstr ""
